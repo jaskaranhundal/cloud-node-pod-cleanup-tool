@@ -1,0 +1,20 @@
+# OpenStack Server Control & Kubernetes Pod Cleanup Configuration
+# Set these environment variables before running the script
+
+# Server name pattern to match (default: node2)
+export PARTIAL_SERVER_NAME=node2
+
+# OpenStack cloud name from clouds.yml (default: otc)
+export CLOUD_NAME=otc
+
+# Comma-separated Kubernetes namespaces to clean up
+# Default: lindera-production,lindera-testing,lindera-development
+export NAMESPACES=lindera-production,lindera-testing,lindera-development
+
+# Optional: Retry configuration
+# export MAX_RETRIES=3
+# export RETRY_DELAY=5
+
+# Usage:
+# source config.example
+# python control_and_cleanup.py start 

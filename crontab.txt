@@ -1,0 +1,5 @@
+# Run start at 7:00 AM Berlin time Mon-Fri
+0 7 * * 1-5 python /app/control_and_cleanup.py start >> /var/log/cron.log 2>&1
+
+# Run stop at 7:00 PM Berlin time Mon-Fri
+0 19 * * 1-5 python /app/control_and_cleanup.py stop >> /var/log/cron.log 2>&1
