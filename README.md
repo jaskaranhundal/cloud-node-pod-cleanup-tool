@@ -1,94 +1,48 @@
-# 🖥️ OpenStack Server Control & Kubernetes Pod Cleanup
+# cloud-node-pod-cleanup
 
-![Python](https://img.shields.io/badge/python-3.6%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-active-brightgreen)
+Baseline OpenStack node lifecycle and Kubernetes duplicate-pod cleanup workflow used as the predecessor to the hardened `cloud-node-pod-cleanup-tool` version.
 
-This script allows controlled **start/stop of OpenStack servers** and performs **Kubernetes pod cleanup** to ensure only valid instances are retained after node transitions.
+## Problem
+Node transitions can leave stale pods and inconsistent scheduling state. Operations teams need a repeatable workflow to start/stop nodes and clean duplicates quickly.
 
----
+## Security Context
+- Supports operational hygiene after node transitions.
+- Reduces risk of orphaned workloads and misaligned runtime state.
+- Provides logs that can support incident reconstruction.
 
-## 📌 Features
+## Architecture/Flow
+Flow summary:
+1. Connect to OpenStack cloud.
+2. Locate target node(s) by partial name match.
+3. Execute start/stop action with status checks.
+4. Run Kubernetes duplicate-pod cleanup by namespace.
+5. Write operational logs.
 
-- ✅ Start or stop OpenStack servers (by partial name match, e.g., `node2`)
-- ✅ Wait for server to reach desired status (`ACTIVE`/`SHUTOFF`)
-- ✅ Clean up short-lived duplicate pods in specified Kubernetes namespaces
-- ✅ Logs all actions for audit and debugging
-- ✅ Cron-friendly CLI interface
-
----
-
-## ⚙️ Setup
-
-### 🔧 Prerequisites
-
-Ensure the following are installed:
-
-- Python 3.6+
-- `openstacksdk`, `kubernetes`, `pytz`
-- Access to:
-  - An OpenStack environment via `clouds.yaml`
-  - A Kubernetes cluster (in-cluster or via kubeconfig)
-
-Install dependencies:
-
+## Setup
 ```bash
+git clone git@github.com:jaskaranhundal/cloud-node-pod-cleanup.git
+cd cloud-node-pod-cleanup
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-## 📝 Configuration
-Edit `control_and_cleanup.py`:
-```bash
-PARTIAL_SERVER_NAME = "node2"
-CLOUD_NAME = "otc"
-NAMESPACES = ["lindera-production", "lindera-testing", "lindera-development"]
-```
----
-## 🚀 Usage
-- Start Server + Clean Up Pods
-
-```bash
 python control_and_cleanup.py start
 ```
 
-- Stop Server
-
-```bash
-python control_and_cleanup.py stop
+## Example Output
+```text
+Connected to OpenStack cloud 'otc'
+Found 1 server(s) matching 'node2'
+Starting node2...
+Server is now ACTIVE
+Duplicate pods cleaned in 3 namespaces
 ```
-- Help
 
-```bash
-python control_and_cleanup.py 
-# Output: Usage: python control_and_cleanup.py [start|stop]
-```
----
-## 🧼 Kubernetes Cleanup Logic
-- Identifies pods with the same "base name"
-- Checks pods on duplicate nodes or across node transitions
-- Deletes the youngest duplicate pod (based on age)
----
+## Limitations
+- Uses static inline configuration in script by default.
+- Limited retry/error handling compared with the newer tool repository.
+- No structured JSON log export.
 
-## 📝 Crontab Example
-To automate server control (Berlin timezone example):
-```bash
-# Start server Mon–Fri at 07:00
-0 7 * * 1-5 /usr/bin/python3 /path/to/control_and_cleanup.py start
-
-# Stop server Mon–Fri at 19:00
-0 19 * * 1-5 /usr/bin/python3 /path/to/control_and_cleanup.py stop
-
-```
----
-## 📂 Project Structure
-
-```bash
-.
-├── control_and_cleanup.py     # Main script
-├── README.md                  # This file
-├── requirements.txt           # Dependencies
-├── server_control.log         # Server operations log (runtime)
-└── k8s_cleanup.log            # Kubernetes cleanup log (runtime)
-
-```
----
+## Roadmap
+- Keep this repository as a baseline reference.
+- Migrate active improvements to `cloud-node-pod-cleanup-tool`.
+- Add compatibility notes between baseline and hardened versions.
