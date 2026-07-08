@@ -1,3 +1,6 @@
 openstacksdk
 kubernetes
 pytz
+PyYAML
+requests
+python-dotenv

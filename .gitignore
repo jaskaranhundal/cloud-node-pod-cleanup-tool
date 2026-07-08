@@ -1,0 +1,15 @@
+# Secrets — never commit (use clouds.yml.template as reference)
+clouds.yml
+.env
+credentials.csv
+.kube/
+
+# Runtime
+log/
+*.log
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
