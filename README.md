@@ -12,6 +12,28 @@ Cloud operations teams often need controlled node start/stop actions while avoid
 - Designed to align with secure operations and compliance-oriented runbooks.
 - Includes guardrails: retries, status checks, validation of target resources, and error logging.
 
+## Evolution
+
+This repository carries the full history of the tool, including the v1 repository
+(`cloud-node-pod-cleanup`, archived) whose commits were imported here.
+
+| | v1 (2025-05) | v2 (2026-07) |
+|---|---|---|
+| Node stop | Immediate OpenStack stop | `cordon` + `drain` first, so pods reschedule before the node goes down |
+| Node start | Start, then assume ready | Uncordon gated on the node reporting `Ready` |
+| Pod cleanup | Delete duplicates | Unchanged, but runs after drain completes |
+| Namespaces | Hardcoded | Required env var, no default |
+| Verification | None | pyflakes + pytest in CI |
+
+**What changed and why.** v1 stopped the OpenStack instance directly. Kubernetes only
+discovers the node is gone after the node-monitor grace period, so pods sat
+`Terminating` on a dead node and their replacements were delayed by the eviction
+timeout. v2 drains first, which moves the workload while the node is still able to
+report status, then stops the instance. On start, the reverse: v1 uncordoned as soon
+as the OpenStack API said the server was `ACTIVE`, which is before the kubelet has
+registered, so the scheduler could place pods on a node that was not ready to run
+them. v2 waits for `Ready` before uncordoning.
+
 ## Architecture/Flow
 ![Architecture and execution flow](docs/architecture-flow.svg)
 
@@ -35,7 +57,7 @@ Configuration:
 ```bash
 export PARTIAL_SERVER_NAME="node2"
 export CLOUD_NAME="otc"
-export NAMESPACES="lindera-production,lindera-testing,lindera-development"
+export NAMESPACES="team-production,team-staging"   # required, no default
 ```
 
 ## Example Output
@@ -44,7 +66,7 @@ INFO Successfully connected to OpenStack cloud: otc
 INFO Found 1 servers matching 'node2'
 INFO Initiated start for server node2
 INFO Server reached status ACTIVE
-INFO Cleanup complete in namespace lindera-production
+INFO Cleanup complete in namespace team-production
 INFO Operation completed with audit logs written
 ```
 

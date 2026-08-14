@@ -7,9 +7,10 @@ export PARTIAL_SERVER_NAME=node2
 # OpenStack cloud name from clouds.yml (default: otc)
 export CLOUD_NAME=otc
 
-# Comma-separated Kubernetes namespaces to clean up
-# Default: lindera-production,lindera-testing,lindera-development
-export NAMESPACES=lindera-production,lindera-testing,lindera-development
+# Comma-separated Kubernetes namespaces to clean up.
+# Required: there is no default, so a typo stops the run instead of
+# targeting the wrong cluster.
+export NAMESPACES=team-production,team-staging
 
 # Optional: Retry configuration
 # export MAX_RETRIES=3
