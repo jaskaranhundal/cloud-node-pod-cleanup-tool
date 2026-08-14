@@ -32,9 +32,10 @@ LOG_DIR = os.getenv("LOG_DIR", os.path.join(BASE_DIR, "log"))
 PARTIAL_SERVER_NAME = os.getenv("PARTIAL_SERVER_NAME", "node-2")
 CLOUD_NAME = os.getenv("CLOUD_NAME", "otc")
 KUBECONFIG_PATH = os.getenv("KUBECONFIG_PATH", os.path.join(BASE_DIR, ".kube", "config"))
-NAMESPACES = os.getenv(
-    "K8S_NAMESPACES", "lindera-production,lindera-testing,lindera-development"
-).split(",")
+# Deliberately no default: this tool deletes pods, so an unset or misspelled
+# variable must stop the run rather than fall back to some other cluster's
+# namespaces. Read as NAMESPACES to match config.example and the README.
+NAMESPACES = [ns.strip() for ns in os.getenv("NAMESPACES", "").split(",") if ns.strip()]
 
 SERVER_TIMEOUT = int(os.getenv("SERVER_START_TIMEOUT", "300"))
 NODE_READY_TIMEOUT = int(os.getenv("NODE_READY_TIMEOUT", "600"))
@@ -417,6 +418,14 @@ def main():
     if len(sys.argv) != 2 or sys.argv[1] not in ("start", "stop"):
         print("Usage: python control_and_cleanup.py [start|stop]")
         sys.exit(1)
+
+    if not NAMESPACES:
+        print(
+            "Error: NAMESPACES is empty. Set it to the comma-separated namespaces "
+            "to clean up, e.g. NAMESPACES=team-production,team-staging",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
     action = sys.argv[1]
     setup_logging(action)
